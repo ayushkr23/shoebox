@@ -16,7 +16,7 @@
 
 Watch the complete product walkthrough in Full HD (1080p, 30fps) with studio narration and dynamic kinetic subtitles:
 
-[![Watch Launch Demo Video](assets/demo_video_banner.png)](https://github.com/ayushkr23/shoebox/blob/main/video/shoebox_demo.mp4)
+[![Watch Launch Demo Video](assets/demo_video_banner.png)](https://youtu.be/-quB9RK13bc)
 
 > 🎬 **[▶ Click here to Play Launch Demo Video (1080p Full HD • Full Voiceover)](https://youtu.be/-quB9RK13bc)**
 > - **Visual Style**: Dark glass fintech (*Linear x Raycast x Apple Wallet*).
