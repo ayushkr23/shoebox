@@ -1,0 +1,15 @@
+# Shoebox Local Data & Cache
+data/
+*.db
+*.sqlite3
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv/
+env/
+venv/
+eval/results.json
+.DS_Store
+Thumbs.db

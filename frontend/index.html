@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shoebox — Local Receipt Photo to Clean Spreadsheet</title>
+  <meta name="description" content="100% local, private receipt extraction powered by open-weight vision models on Ollama.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Ambient Animated Gradient Mesh -->
+  <div class="mesh-background" aria-hidden="true">
+    <div class="mesh-sphere sphere-indigo"></div>
+    <div class="mesh-sphere sphere-teal"></div>
+    <div class="mesh-sphere sphere-magenta"></div>
+    <div class="mesh-overlay"></div>
+  </div>
+
+  <div class="app-layout">
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="brand">
+          <div class="brand-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+              <path d="m3.3 7 8.7 5 8.7-5"/>
+              <path d="M12 22V12"/>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <h1 class="brand-title">Shoebox</h1>
+            <p class="brand-tagline">Drop the receipts. Keep the privacy.</p>
+          </div>
+        </div>
+
+        <!-- Privacy Status Badge -->
+        <button id="privacyBadgeBtn" class="privacy-badge" title="Click to view local privacy proof">
+          <span class="pulse-dot"></span>
+          <span class="badge-text">100% local · nothing leaves this device</span>
+          <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="header-right">
+        <button id="clearDataBtn" class="btn btn-ghost btn-sm" title="Clear all receipts for a fresh session">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          <span>Reset Session</span>
+        </button>
+
+        <div class="export-dropdown">
+          <button id="exportMenuBtn" class="btn btn-primary btn-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Download CSV</span>
+            <svg class="chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div id="exportMenu" class="dropdown-menu">
+            <button id="exportReceiptsCsv" class="dropdown-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
+              </svg>
+              <div>
+                <strong>Receipts Spreadsheet</strong>
+                <span>One row per receipt (Excel-ready)</span>
+              </div>
+            </button>
+            <button id="exportLineItemsCsv" class="dropdown-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+              <div>
+                <strong>Detailed Line Items</strong>
+                <span>All line items broken down</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Expandable Privacy Proof Panel -->
+    <section id="privacyPanel" class="privacy-panel glass-card collapsed" aria-expanded="false">
+      <div class="panel-header">
+        <div class="panel-header-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <h3>Local Privacy & Architecture Proof</h3>
+        </div>
+        <button id="closePrivacyPanel" class="btn-icon" aria-label="Close privacy panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="privacy-grid">
+        <div class="privacy-stat">
+          <span class="stat-label">Model in use</span>
+          <span id="proofModel" class="stat-value font-mono">gemma3:4b</span>
+          <span class="stat-sub">Open-weight vision model</span>
+        </div>
+        <div class="privacy-stat">
+          <span class="stat-label">Inference Runtime</span>
+          <span id="proofEndpoint" class="stat-value font-mono">localhost:11434</span>
+          <span class="stat-sub">Ollama REST API (/api/chat)</span>
+        </div>
+        <div class="privacy-stat">
+          <span class="stat-label">Cloud API Cost</span>
+          <span class="stat-value font-mono text-emerald">$0.00</span>
+          <span class="stat-sub">Zero per-document fees forever</span>
+        </div>
+        <div class="privacy-stat">
+          <span class="stat-label">Receipts Processed</span>
+          <span id="proofCount" class="stat-value font-mono">0</span>
+          <span class="stat-sub">Stored in local SQLite only</span>
+        </div>
+        <div class="privacy-stat highlight-stat">
+          <span class="stat-label">Estimated Time Saved</span>
+          <span id="proofTimeSaved" class="stat-value font-mono text-indigo">0m 00s</span>
+          <span class="stat-sub">Based on ~90s manual entry/receipt</span>
+        </div>
+      </div>
+      <div class="privacy-footer">
+        <div class="shield-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>Offline Guarantee: Zero external CDNs, zero telemetry, zero remote HTTP calls. Your data never leaves this machine.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Summary Strip -->
+    <section class="summary-strip">
+      <div class="stat-card glass-card">
+        <div class="stat-icon-wrapper icon-emerald">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-title">Total Spend</span>
+          <span id="statTotalSpend" class="stat-number tabular-nums">₹0.00</span>
+          <span id="statSpendSub" class="stat-subtext">Across all receipts</span>
+        </div>
+      </div>
+
+      <div class="stat-card glass-card">
+        <div class="stat-icon-wrapper icon-teal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-title">Total Tax / GST</span>
+          <span id="statTotalTax" class="stat-number tabular-nums">₹0.00</span>
+          <span class="stat-subtext">Claimable deductions</span>
+        </div>
+      </div>
+
+      <div class="stat-card glass-card">
+        <div class="stat-icon-wrapper icon-indigo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-title">Receipts Scanned</span>
+          <span id="statReceiptCount" class="stat-number tabular-nums">0</span>
+          <span id="statAttentionSub" class="stat-subtext">0 need review</span>
+        </div>
+      </div>
+
+      <!-- Custom SVG Category Breakdown Card -->
+      <div class="stat-card category-card glass-card">
+        <div class="category-card-header">
+          <span class="stat-title">Spend by Category</span>
+          <span id="categoryCountTag" class="badge-sub">0 categories</span>
+        </div>
+        <div class="category-chart-container">
+          <svg id="categorySvgChart" viewBox="0 0 280 40" class="category-bar-svg" preserveAspectRatio="none">
+            <!-- Dynamic SVG rect segments generated in app.js -->
+            <rect x="0" y="8" width="280" height="24" rx="6" fill="rgba(255,255,255,0.08)"/>
+          </svg>
+          <div id="categoryLegend" class="category-legend">
+            <!-- Dynamic category chips -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Upload & Dropzone Area -->
+    <section class="upload-section">
+      <div id="dropzone" class="dropzone glass-card">
+        <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/heic" class="file-input-hidden">
+        
+        <div class="dropzone-inner">
+          <div class="dropzone-icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          
+          <div class="dropzone-prompt">
+            <h3>Drag & drop receipts or bills here</h3>
+            <p>Supports JPG, PNG, WEBP, HEIC · Processed 100% locally by Gemma Vision</p>
+          </div>
+
+          <div class="dropzone-actions">
+            <button type="button" id="browseFilesBtn" class="btn btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+              <span>Select Files</span>
+            </button>
+            <span class="action-divider">or</span>
+            <button type="button" id="loadSamplesBtn" class="btn btn-demo btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              <span>Try with 3 Sample Receipts</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thumbnail queue slider (visible when items are queued/scanning) -->
+      <div id="queueThumbnailBar" class="queue-thumbnail-bar" style="display: none;">
+        <div class="queue-bar-header">
+          <span class="queue-title">Sequential Processing Queue</span>
+          <span id="queueProgressBadge" class="badge badge-indigo">1 scanning</span>
+        </div>
+        <div id="queueThumbnailGrid" class="queue-thumbnail-grid">
+          <!-- Dynamic thumbnails with scanning sweep animation -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Receipts Review Table Section -->
+    <section class="table-section glass-card">
+      <div class="table-toolbar">
+        <div class="table-title-group">
+          <h2>Receipts & Invoices</h2>
+          <span id="tableCountBadge" class="table-badge">0 items</span>
+        </div>
+
+        <div class="table-controls">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Search vendor, category, notes..." autocomplete="off">
+          </div>
+
+          <select id="filterCategory" class="select-glass">
+            <option value="ALL">All Categories</option>
+            <option value="Food">Food</option>
+            <option value="Travel">Travel</option>
+            <option value="Supplies">Supplies</option>
+            <option value="Utilities">Utilities</option>
+            <option value="Rent">Rent</option>
+            <option value="Software">Software</option>
+            <option value="Equipment">Equipment</option>
+            <option value="Services">Services</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <select id="filterStatus" class="select-glass">
+            <option value="ALL">All Statuses</option>
+            <option value="done">Done</option>
+            <option value="needs review">Needs Review</option>
+            <option value="scanning">Scanning</option>
+            <option value="queued">Queued</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table Container with Sticky Header -->
+      <div class="table-responsive">
+        <table class="receipt-table" id="receiptsTable">
+          <thead>
+            <tr>
+              <th class="th-status">Status</th>
+              <th class="th-date">Date</th>
+              <th class="th-vendor">Vendor</th>
+              <th class="th-category">Category</th>
+              <th class="th-curr">Curr</th>
+              <th class="th-num">Subtotal</th>
+              <th class="th-num">Tax / GST</th>
+              <th class="th-num">Total</th>
+              <th class="th-confidence">Confidence</th>
+              <th class="th-notes">Warnings & Notes</th>
+              <th class="th-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="receiptsTableBody">
+            <!-- Dynamically populated rows -->
+          </tbody>
+        </table>
+
+        <!-- Empty State -->
+        <div id="tableEmptyState" class="empty-state">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <h3>No receipts processed yet</h3>
+          <p>Drop your receipt images into the dropzone above or click the button below to test with sample synthetic receipts.</p>
+          <button id="emptyLoadSamplesBtn" class="btn btn-primary btn-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            <span>Load 3 Synthetic Receipts</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Side Drawer for Detailed Receipt Inspection & Editing -->
+  <aside id="sideDrawer" class="side-drawer" aria-hidden="true">
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <div class="drawer-container">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <span id="drawerStatusBadge" class="badge badge-done">Done</span>
+          <h3 id="drawerVendorTitle">Vendor Details</h3>
+        </div>
+        <div class="drawer-header-actions">
+          <button id="drawerReprocessBtn" class="btn btn-ghost btn-sm" title="Reprocess image with Ollama">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            <span>Reprocess</span>
+          </button>
+          <button id="closeDrawerBtn" class="btn-icon" aria-label="Close drawer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="drawer-content">
+        <!-- Split view: Left receipt image preview, Right editable fields -->
+        <div class="drawer-split">
+          <!-- Left Column: Receipt Image with Zoom Click -->
+          <div class="drawer-col-image">
+            <div class="image-preview-wrapper" id="imagePreviewContainer" title="Click to inspect full resolution">
+              <img id="drawerImage" src="" alt="Receipt Photo" class="drawer-receipt-img">
+              <div class="image-zoom-overlay">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  <line x1="11" y1="8" x2="11" y2="14"/>
+                  <line x1="8" y1="11" x2="14" y2="11"/>
+                </svg>
+                <span>Click to zoom</span>
+              </div>
+            </div>
+            <div class="image-filename" id="drawerFilename">filename.png</div>
+          </div>
+
+          <!-- Right Column: Fields, Line Items, Warnings -->
+          <div class="drawer-col-form">
+            <!-- Warnings Box if any -->
+            <div id="drawerWarningsBox" class="drawer-warnings" style="display: none;">
+              <div class="warning-icon-wrapper">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <div id="drawerWarningsList" class="warning-list"></div>
+            </div>
+
+            <!-- Confidence Bar -->
+            <div class="confidence-bar-group">
+              <div class="confidence-header">
+                <span class="conf-label">Vision Model Confidence</span>
+                <span id="drawerConfidenceVal" class="conf-value font-mono">92%</span>
+              </div>
+              <div class="confidence-track">
+                <div id="drawerConfidenceFill" class="confidence-fill" style="width: 92%;"></div>
+              </div>
+            </div>
+
+            <form id="drawerForm" class="drawer-form" onsubmit="event.preventDefault();">
+              <div class="form-row">
+                <div class="form-group flex-2">
+                  <label for="drawerVendorInput">Vendor / Store Name</label>
+                  <input type="text" id="drawerVendorInput" class="form-input" required>
+                </div>
+                <div class="form-group flex-1">
+                  <label for="drawerDateInput">Date (YYYY-MM-DD)</label>
+                  <input type="text" id="drawerDateInput" class="form-input" placeholder="YYYY-MM-DD">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label for="drawerCategorySelect">Category</label>
+                  <select id="drawerCategorySelect" class="form-input">
+                    <option value="Food">Food</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Supplies">Supplies</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Software">Software</option>
+                    <option value="Equipment">Equipment</option>
+                    <option value="Services">Services</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group flex-1">
+                  <label for="drawerCurrencyInput">Currency</label>
+                  <input type="text" id="drawerCurrencyInput" class="form-input font-mono" maxlength="5">
+                </div>
+                <div class="form-group flex-1">
+                  <label for="drawerPaymentInput">Payment Method</label>
+                  <input type="text" id="drawerPaymentInput" class="form-input" placeholder="e.g. UPI, Card">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label for="drawerSubtotalInput">Subtotal</label>
+                  <input type="number" step="0.01" id="drawerSubtotalInput" class="form-input tabular-nums">
+                </div>
+                <div class="form-group flex-1">
+                  <label for="drawerTaxInput">Tax / GST</label>
+                  <input type="number" step="0.01" id="drawerTaxInput" class="form-input tabular-nums">
+                </div>
+                <div class="form-group flex-1 highlight-total">
+                  <label for="drawerTotalInput">Total Amount</label>
+                  <input type="number" step="0.01" id="drawerTotalInput" class="form-input tabular-nums font-bold" required>
+                </div>
+              </div>
+
+              <!-- Line Items Section -->
+              <div class="line-items-header">
+                <h4>Extracted Line Items</h4>
+                <button type="button" id="addLineItemBtn" class="btn btn-ghost btn-xs">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  <span>Add Item</span>
+                </button>
+              </div>
+
+              <div class="line-items-container">
+                <table class="line-items-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 50%;">Description</th>
+                      <th style="width: 15%; text-align: right;">Qty</th>
+                      <th style="width: 25%; text-align: right;">Price</th>
+                      <th style="width: 10%;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="drawerLineItemsBody">
+                    <!-- Line items dynamically rendered -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Notes & Caveats -->
+              <div class="form-group">
+                <label for="drawerNotesInput">Notes & Model Observations</label>
+                <textarea id="drawerNotesInput" class="form-input" rows="2" placeholder="Any handwritten notes, unreadable text, or caveats..."></textarea>
+              </div>
+
+              <!-- Raw Model Output Collapsible -->
+              <details class="raw-output-accordion">
+                <summary>View Raw JSON from Ollama</summary>
+                <pre id="drawerRawOutput" class="raw-json-block font-mono"></pre>
+              </details>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button id="drawerDeleteBtn" class="btn btn-danger btn-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          <span>Delete Receipt</span>
+        </button>
+
+        <div class="footer-save-group">
+          <button id="cancelDrawerBtn" class="btn btn-ghost btn-sm">Cancel</button>
+          <button id="saveDrawerBtn" class="btn btn-primary btn-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Save Changes</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Fullscreen Image Zoom Modal -->
+  <div id="imageZoomModal" class="image-zoom-modal" aria-hidden="true">
+    <div class="zoom-backdrop" id="closeZoomBackdrop"></div>
+    <div class="zoom-content">
+      <button id="closeZoomBtn" class="btn-icon zoom-close-btn" aria-label="Close zoom modal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <img id="zoomedImage" src="" alt="Full Resolution Receipt" class="zoomed-img">
+    </div>
+  </div>
+
+  <!-- Full-Screen Setup Helper Screen (Health check overlay) -->
+  <div id="setupHelperModal" class="setup-helper-modal" aria-hidden="true" style="display: none;">
+    <div class="setup-backdrop"></div>
+    <div class="setup-card glass-card">
+      <div class="setup-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>Local AI Runtime Check</span>
+      </div>
+
+      <h2 id="setupTitle">Ollama Runtime Not Detected</h2>
+      <p id="setupDescription">Shoebox runs 100% locally on your hardware. To scan receipt photos, Ollama needs to be running with the vision model installed.</p>
+
+      <div class="setup-steps">
+        <div class="setup-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Start Ollama service</h4>
+            <div class="code-box">
+              <code>ollama serve</code>
+              <button class="btn-copy" onclick="navigator.clipboard.writeText('ollama serve')">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="setup-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Pull the multimodal Gemma vision model</h4>
+            <div class="code-box">
+              <code id="setupPullCmd">ollama pull gemma3:4b</code>
+              <button class="btn-copy" onclick="navigator.clipboard.writeText('ollama pull gemma3:4b')">Copy</button>
+            </div>
+            <span class="step-sub">Or set <code>MODEL_NAME</code> in your environment to any multimodal model.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-actions">
+        <button id="retryHealthBtn" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          <span>Retry Connection</span>
+        </button>
+        <button id="bypassDemoBtn" class="btn btn-secondary">
+          <span>Explore Demo Mode (Offline Preview)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- Vanilla JS Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>
