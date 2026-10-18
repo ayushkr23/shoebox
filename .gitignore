@@ -13,3 +13,13 @@ venv/
 eval/results.json
 .DS_Store
 Thumbs.db
+
+# Video Production & Raw Media (Kept locally on machine)
+video/
+*.mp4
+*.webm
+*.wav
+*.mp3
+*.ass
+scratch_*.ps1
+test_*.ps1
