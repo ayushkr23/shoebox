@@ -168,8 +168,8 @@ ollama pull gemma3:4b
 
 ### 2. Clone & Install Dependencies
 ```bash
-git clone https://github.com/<your-username>/shoebox-to-cashflow.git
-cd shoebox-to-cashflow
+git clone https://github.com/ayushkr23/shoebox.git
+cd shoebox
 
 # Create and activate a virtual environment (optional but recommended)
 python -m venv .venv
