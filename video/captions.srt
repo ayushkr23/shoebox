@@ -1,0 +1,35 @@
+1
+00:00:00,400 --> 00:00:08,993
+Every small business has a shoebox. Bills pile up, and typing receipts eats hours.
+
+2
+00:00:10,189 --> 00:00:18,268
+Cloud tools promise to fix it, but they want your financial data on someone else's server, at someone else's price.
+
+3
+00:00:19,469 --> 00:00:30,662
+Meet Shoebox. Drop the receipts, keep the privacy. Powered by Gemma, 100% local.
+
+4
+00:00:31,859 --> 00:00:42,878
+100% local. Zero cloud calls, zero telemetry, and $0.00 cost per document.
+
+5
+00:00:44,079 --> 00:00:54,352
+Drop in photos. Gemma extracts date, vendor, tax, total, and line items in seconds.
+
+6
+00:00:55,549 --> 00:01:04,362
+When it isn't sure, it flags an amber warning instead of guessing. You stay in control.
+
+7
+00:01:05,560 --> 00:01:12,683
+One click. A clean, Excel-ready spreadsheet with all deductions categorized.
+
+8
+00:01:13,879 --> 00:01:22,902
+Real benchmarks: 2.3s per receipt · 100% accuracy · $0.00 cloud cost · 6m saved.
+
+9
+00:01:24,099 --> 00:01:34,628
+Shoebox: paperwork that stays on your desk. Built with Gemma and Ollama.

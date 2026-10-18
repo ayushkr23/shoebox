@@ -1,0 +1,26 @@
+[00:00:00,400 - Hook]
+Every small business has a shoebox. Bills pile up, and typing receipts into a spreadsheet eats hours every week.
+
+[00:00:10,189 - Problem Turn]
+Cloud tools promise to fix it, but they want your financial data on someone else's server, at someone else's price.
+
+[00:00:19,469 - Reveal]
+Meet Shoebox. Drop the receipts, keep the privacy. It runs entirely on this laptop, powered by Gemma, an open-weight vision model.
+
+[00:00:31,859 - Privacy Proof]
+One hundred percent local. Nothing leaves this device. Zero cloud API calls, zero telemetry, and zero cost per document.
+
+[00:00:44,079 - Magic Extraction]
+Drop in photos. The scanning beam sweeps, and Gemma reads the date, vendor, tax, total, and line items in seconds.
+
+[00:00:55,549 - Trust & Review]
+When it isn't sure, it flags an amber warning instead of guessing. Click any row to inspect the image and verify line items.
+
+[00:01:05,560 - Output & Export]
+One click. A clean, Excel-ready spreadsheet with all deductions categorized and formatted.
+
+[00:01:13,879 - Real Numbers]
+Real benchmarks: two point three seconds per receipt, one hundred percent accuracy on evaluation, and six minutes saved.
+
+[00:01:24,099 - Close]
+Because the model is open, you can swap it or fine-tune it with zero permission and zero pricing. Shoebox: paperwork that stays on your desk.
